@@ -1,0 +1,6 @@
+findandreplace /wait /files:C:\Temp\*web.config /find:"Composite\.xap\?version=(?<v>\d+\.\d+\.\d+)" /replace:"Composite.xap?version=20.0.0"
+findandreplace /wait /files:C:\Temp\web.config /patternfile:C:\Temp\FindAndReplace.json
+findandreplace /wait /files:C:\Files\Dropbox\Develop\Projects\PowerMakeSystemsWeb25\Articles\KB\Automation\LayersOfIndustrialAutomation.md /patternfile:C:\Files\Dropbox\Develop\Projects\PowerMakeSystemsWeb25\scripts\ReadmePostProcessing.json
+findandreplace /wait /files:C:\Files\Dropbox\Develop\Shared\SvgTools\README.md /patternfile:C:\Files\Dropbox\Develop\Shared\SvgTools\Scripts\ReadmePostProcessing.json
+
+findandreplaceinfiles /wait /workingpath:C:/Files/Dropbox/Develop/Shared/SvgTools/Scripts /patternfile:VersionTransfer.json

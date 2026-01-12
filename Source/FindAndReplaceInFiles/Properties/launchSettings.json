@@ -1,0 +1,8 @@
+{
+  "profiles": {
+    "FindAndReplaceInFiles": {
+      "commandName": "Project",
+      "commandLineArgs": "findandreplaceinfiles /wait /workingpath:C:/Files/Dropbox/Develop/Shared/SvgTools/Scripts /patternfile:VersionTransfer.json"
+    }
+  }
+}

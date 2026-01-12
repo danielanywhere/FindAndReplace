@@ -1,0 +1,8 @@
+{
+  "profiles": {
+    "FindAndReplace": {
+      "commandName": "Project",
+      "commandLineArgs": "findandreplace /wait /files:C:\\Files\\Dropbox\\Develop\\Shared\\SvgTools\\README.md /patternfile:C:\\Files\\Dropbox\\Develop\\Shared\\SvgTools\\Scripts\\ReadmePostProcessing.json"
+    }
+  }
+}

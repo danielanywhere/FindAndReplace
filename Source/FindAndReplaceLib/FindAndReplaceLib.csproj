@@ -1,0 +1,51 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+<TargetFramework>netstandard2.1</TargetFramework>
+<PackageLicenseExpression>AGPL-3.0-only</PackageLicenseExpression>
+<Nullable>disable</Nullable>
+<UserSecretsId>f17c1fe9-d37b-4510-acbb-a3e140727dfa</UserSecretsId>
+<RootNamespace>FindAndReplaceLib</RootNamespace>
+<Platforms>AnyCPU;x64</Platforms>
+<PackageId>Dans.FindAndReplace.Library</PackageId>
+<Title>Dan's FindAndReplace Library</Title>
+<Version>25.3218.4612</Version>
+<Description>Dan's FindAndReplace Library.</Description>
+<Copyright>Copyright(c) 2020-2025. Daniel Patterson, MCSD (danielanywhere)</Copyright>
+<PackageProjectUrl>https://github.com/danielanywhere/SvgTools</PackageProjectUrl>
+<PackageReadmeFile>README.md</PackageReadmeFile>
+<PackageTags>svg;svg-to-xaml;svg-animation</PackageTags>
+<Authors>Daniel Patterson, MCSD (danielanywhere)</Authors>
+<GenerateDocumentationFile>True</GenerateDocumentationFile>
+<IncludeSourceRevisionInInformationalVersion>false</IncludeSourceRevisionInInformationalVersion>
+<SignAssembly>False</SignAssembly>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
+    <NoWarn>1701;1702;CA1825;IDE0044;IDE0057;IDE0059;IDE0090;IDE1006</NoWarn>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
+    <NoWarn>1701;1702;CA1825;IDE0044;IDE0057;IDE0059;IDE0090;IDE1006</NoWarn>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Newtonsoft.Json" Version="13.0.2-beta1" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Compile Update="ResourceMain.Designer.cs">
+      <DesignTime>True</DesignTime>
+      <AutoGen>True</AutoGen>
+      <DependentUpon>ResourceMain.resx</DependentUpon>
+    </Compile>
+  </ItemGroup>
+
+  <ItemGroup>
+    <EmbeddedResource Update="ResourceMain.resx">
+      <Generator>ResXFileCodeGenerator</Generator>
+      <LastGenOutput>ResourceMain.Designer.cs</LastGenOutput>
+    </EmbeddedResource>
+  </ItemGroup>
+
+</Project>
