@@ -515,6 +515,9 @@ namespace FindAndReplaceLib
 		/// <param name="workingPath">
 		/// The working path for a relative filename.
 		/// </param>
+		/// <param name="quiet">
+		/// Value indicating whether to limit console output.
+		/// </param>
 		/// <returns>
 		/// Value indicating whether the file was successfully validated.
 		/// </returns>
@@ -524,7 +527,7 @@ namespace FindAndReplaceLib
 		/// file or directory is specified.
 		/// </remarks>
 		public static bool ValidateFile(string filePath, List<FileInfo> fileList,
-			string workingPath)
+			string workingPath, bool quiet = false)
 		{
 			DirectoryInfo dir = null;
 			FileInfo file = null;
@@ -575,8 +578,11 @@ namespace FindAndReplaceLib
 				{
 					//	Directory can't contain a wildcard.
 					result = false;
-					Console.WriteLine("Directory: " + pathpattern +
-						" can't contain wildcards...");
+					if(!quiet)
+					{
+						Console.WriteLine("Directory: " + pathpattern +
+							" can't contain wildcards...");
+					}
 				}
 			}
 			else
@@ -618,16 +624,137 @@ namespace FindAndReplaceLib
 						else
 						{
 							result = false;
-							Console.WriteLine("File not found: " + filepattern);
+							if(!quiet)
+							{
+								Console.WriteLine("File not found: " + filepattern);
+							}
 						}
 					}
 				}
 				else
 				{
 					result = false;
-					Console.WriteLine("Folder not found: " + pathpattern);
+					if(!quiet)
+					{
+						Console.WriteLine("Folder not found: " + pathpattern);
+					}
 				}
 			}
+			return result;
+		}
+		//*-----------------------------------------------------------------------*
+
+		//*-----------------------------------------------------------------------*
+		//* ValidateIndividualFile																								*
+		//*-----------------------------------------------------------------------*
+		/// <summary>
+		/// Validate and return the validated version of the caller's individual
+		/// filename.
+		/// </summary>
+		/// <param name="filePath">
+		/// The path and filename of an individual file. Wildcards not allowed.
+		/// </param>
+		/// <param name="workingPath">
+		/// The working path to apply, if necessary.
+		/// </param>
+		/// <param name="create">
+		/// Value indicating whether the file can be created.
+		/// </param>
+		/// <param name="quiet">
+		/// Value indicating whether to limit console output.
+		/// </param>
+		/// <returns>
+		/// A fully qualified valid path and filename, if legitimate. Otherwise,
+		/// an empty string.
+		/// </returns>
+		public static string ValidateIndividualFile(string filePath,
+			string workingPath, bool create = false, bool quiet = false)
+		{
+			bool bContinue = true;
+			DirectoryInfo dir = null;
+			FileInfo file = null;
+			string filepattern = "";
+			int lastSlash = 0;
+			string pathpattern = "";
+			string refFilePattern = "";
+			string result = "";
+
+			refFilePattern = AbsoluteFilename(filePath, workingPath);
+			bContinue =
+				(refFilePattern.IndexOf('?') == -1 &&
+				refFilePattern.IndexOf('*') == -1);
+			lastSlash = Math.Max(
+				refFilePattern.LastIndexOf('\\'),
+				refFilePattern.LastIndexOf('/'));
+			if(bContinue)
+			{
+				if(lastSlash > -1 && lastSlash < refFilePattern.Length)
+				{
+					//	A path is specified.
+					if(lastSlash + 1 < refFilePattern.Length)
+					{
+						filepattern = refFilePattern.Substring(lastSlash + 1);
+					}
+					pathpattern = refFilePattern.Substring(0, lastSlash);
+					if(pathpattern.Length == 0)
+					{
+						pathpattern = Directory.GetCurrentDirectory();
+					}
+					if(!pathpattern.EndsWith(@"\") && !pathpattern.EndsWith("/"))
+					{
+						pathpattern += @"\";
+					}
+				}
+				else
+				{
+					//	Only the filename is specified.
+					filepattern = refFilePattern;
+				}
+				if(pathpattern.Length > 0)
+				{
+					dir = new DirectoryInfo(pathpattern);
+				}
+				else
+				{
+					dir = new DirectoryInfo(Directory.GetCurrentDirectory());
+				}
+				if(dir.Exists)
+				{
+					pathpattern = dir.FullName;
+					if(!pathpattern.EndsWith(@"\") && !pathpattern.EndsWith("/"))
+					{
+						pathpattern += @"\";
+					}
+					//	Specific filename.
+					file = new FileInfo(pathpattern + filepattern);
+					if(create || file.Exists)
+					{
+						result = file.FullName;
+					}
+					else
+					{
+						if(!quiet)
+						{
+							Console.WriteLine($"File not found: {filepattern}");
+						}
+					}
+				}
+				else
+				{
+					if(!quiet)
+					{
+						Console.WriteLine($"Folder not found: {pathpattern}");
+					}
+				}
+			}
+			else
+			{
+				if(!quiet)
+				{
+					Console.WriteLine($"Wildcards not allowed on {refFilePattern}");
+				}
+			}
+
 			return result;
 		}
 		//*-----------------------------------------------------------------------*

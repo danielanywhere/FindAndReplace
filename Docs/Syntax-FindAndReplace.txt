@@ -1,7 +1,10 @@
 Find and replace text in one or more files.
 
 Syntax:
- FindAndReplace.exe /files:{SourceFilePath}
+ FindAndReplace.exe
+                        { /files:{SourceFilePath} |
+                        /infile:{Filename} /outfile:{Filename} }
+
                     [/?]
                     [/find:{FindPattern}]
                     [/replace:{ReplacePattern}]

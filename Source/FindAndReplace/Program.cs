@@ -17,6 +17,7 @@
  */
 
 using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Text;
 
@@ -131,11 +132,15 @@ namespace FindAndReplace
 		public static void Main(string[] args)
 		{
 			bool bShowHelp = false; //	Flag - Explicit Show Help.
+			bool bOutputFileRequired = false;
 			char[] comma = new char[] { ',' };
+			List<string> inputFilenames = new List<string>();
 			string key = "";        //	Current Parameter Key.
 			string lowerArg = "";   //	Current Lowercase Argument.
 			StringBuilder message = new StringBuilder();
 			string name = "";
+			string outputFilename = "";
+			string patternFilename = "";
 			Program prg = new Program();  //	Initialized instance.
 			string text = "";
 			string value = "";
@@ -167,11 +172,9 @@ namespace FindAndReplace
 				key = "/files:";
 				if(lowerArg.StartsWith(key))
 				{
-					if(!prg.ValidateFile(arg.Substring(key.Length)))
+					if(!bOutputFileRequired)
 					{
-						message.AppendLine(
-							$"Invalid file pattern: {arg.Substring(key.Length)}\r\n");
-						bShowHelp = true;
+						inputFilenames.Add(arg.Substring(key.Length));
 					}
 					continue;
 				}
@@ -181,15 +184,26 @@ namespace FindAndReplace
 					prg.FindPattern = arg.Substring(key.Length);
 					continue;
 				}
+				key = "/infile:";
+				if(lowerArg.StartsWith(key))
+				{
+					text = arg.Substring(key.Length);
+					inputFilenames.Clear();
+					inputFilenames.Add(text);
+					bOutputFileRequired = true;
+					continue;
+				}
+				key = "/outfile:";
+				if(lowerArg.StartsWith(key))
+				{
+					outputFilename = arg.Substring(key.Length);
+					bOutputFileRequired = true;
+					continue;
+				}
 				key = "/patternfile:";
 				if(lowerArg.StartsWith(key))
 				{
-					text = ReadPatterns(prg, arg.Substring(key.Length));
-					if(text.Length > 0)
-					{
-						message.AppendLine(text);
-						bShowHelp = (message.Length > 0);
-					}
+					patternFilename = arg.Substring(key.Length);
 					continue;
 				}
 				key = "/regex:";
@@ -236,6 +250,7 @@ namespace FindAndReplace
 						Name = name,
 						Value = value
 					});
+					continue;
 				}
 				key = "/wait";
 				if(lowerArg.StartsWith(key))
@@ -249,8 +264,81 @@ namespace FindAndReplace
 					WorkingPath =
 						GetFullFoldername(
 							arg.Substring(key.Length), false, "Working");
+					continue;
 				}
 			}
+			//	Filenames are not tested until after the parameter list has been
+			//	read in order to allow arguments to be specified in any order.
+			if(inputFilenames.Count > 0)
+			{
+				foreach(string filenameItem in inputFilenames)
+				{
+					if(!ValidateFile(filenameItem, prg.mFiles, WorkingPath, true))
+					{
+						if(bOutputFileRequired)
+						{
+							//	infile, outfile pair.
+							message.AppendLine(
+								$"Invalid input filename: {filenameItem}\r\n");
+							bShowHelp = true;
+						}
+						else
+						{
+							//	All files are I/O.
+							message.AppendLine(
+								$"Invalid file pattern: {filenameItem}\r\n");
+							bShowHelp = true;
+						}
+					}
+				}
+				if(outputFilename.Length > 0)
+				{
+					text = ValidateIndividualFile(outputFilename, WorkingPath,
+						create: true, quiet: true);
+					if(text.Length > 0)
+					{
+						prg.mOutputFile = new FileInfo(text);
+					}
+					else
+					{
+						message.AppendLine(
+							$"Invalid output filename: {outputFilename}\r\n");
+						bShowHelp = true;
+					}
+				}
+			}
+			if(patternFilename.Length > 0)
+			{
+				text = ValidateIndividualFile(patternFilename, WorkingPath,
+					create: false, quiet: true);
+				if(text.Length > 0)
+				{
+					text = ReadPatterns(prg, text);
+					if(text.Length > 0)
+					{
+						message.AppendLine(text);
+						bShowHelp = true;
+					}
+				}
+				else
+				{
+					message.AppendLine(
+						$"Invalid pattern filename: {patternFilename}");
+				}
+			}
+			if(!bShowHelp && bOutputFileRequired &&
+				(prg.mFiles.Count < 1 || prg.mOutputFile == null))
+			{
+				message.AppendLine(
+					"Input and output files are required in this mode.");
+				bShowHelp = true;
+			}
+			if(!bShowHelp && !(prg.Patterns?.Count > 0))
+			{
+				message.AppendLine("Patterns not defined...");
+				bShowHelp = true;
+			}
+
 			if(bShowHelp)
 			{
 				//	Display Syntax.
@@ -286,11 +374,11 @@ namespace FindAndReplace
 		//*-----------------------------------------------------------------------*
 		//*	Files																																	*
 		//*-----------------------------------------------------------------------*
-		private FileInfo[] mFiles = new FileInfo[0];
+		private List<FileInfo> mFiles = new List<FileInfo>();
 		/// <summary>
 		/// Get a reference to the array of files to be searched.
 		/// </summary>
-		public FileInfo[] Files
+		public List<FileInfo> Files
 		{
 			get { return mFiles; }
 		}
@@ -311,16 +399,16 @@ namespace FindAndReplace
 		//*-----------------------------------------------------------------------*
 
 		//*-----------------------------------------------------------------------*
-		//*	ReplacePattern																												*
+		//*	OutputFile																														*
 		//*-----------------------------------------------------------------------*
-		private string mReplacePattern = "";
+		private FileInfo mOutputFile = null;
 		/// <summary>
-		/// Get/Set the replacement pattern to apply.
+		/// Get/Set a reference to the output file to be stored.
 		/// </summary>
-		public string ReplacePattern
+		public FileInfo OutputFile
 		{
-			get { return mReplacePattern; }
-			set { mReplacePattern = value; }
+			get { return mOutputFile; }
+			set { mOutputFile = value; }
 		}
 		//*-----------------------------------------------------------------------*
 
@@ -341,6 +429,20 @@ namespace FindAndReplace
 		//*-----------------------------------------------------------------------*
 
 		//*-----------------------------------------------------------------------*
+		//*	ReplacePattern																												*
+		//*-----------------------------------------------------------------------*
+		private string mReplacePattern = "";
+		/// <summary>
+		/// Get/Set the replacement pattern to apply.
+		/// </summary>
+		public string ReplacePattern
+		{
+			get { return mReplacePattern; }
+			set { mReplacePattern = value; }
+		}
+		//*-----------------------------------------------------------------------*
+
+		//*-----------------------------------------------------------------------*
 		//*	Run																																		*
 		//*-----------------------------------------------------------------------*
 		/// <summary>
@@ -349,7 +451,7 @@ namespace FindAndReplace
 		public void Run()
 		{
 			string content = "";    //	Full file content.
-			int count = mFiles.Length;
+			int count = mFiles.Count;
 			FileInfo file = null;
 			int index = 0;
 			int lineCount = 0;
@@ -408,11 +510,26 @@ namespace FindAndReplace
 						Console.WriteLine($"File: {file.Name}");
 						if(mUseBackup)
 						{
-							File.Copy(file.FullName, GetBackupFilename(file.FullName));
+							if(mOutputFile != null)
+							{
+								File.Copy(mOutputFile.FullName,
+									GetBackupFilename(mOutputFile.FullName));
+							}
+							else
+							{
+								File.Copy(file.FullName, GetBackupFilename(file.FullName));
+							}
 						}
 						content = File.ReadAllText(file.FullName);
 						content = mPatterns.Replace(file.Name, content);
-						File.WriteAllText(file.FullName, content);
+						if(mOutputFile != null)
+						{
+							File.WriteAllText(mOutputFile.FullName, content);
+						}
+						else
+						{
+							File.WriteAllText(file.FullName, content);
+						}
 					}
 				}
 				Console.WriteLine("Find And Replace Finished...");
@@ -451,131 +568,6 @@ namespace FindAndReplace
 		{
 			get { return mUseRegex; }
 			set { mUseRegex = value; }
-		}
-		//*-----------------------------------------------------------------------*
-
-		//*-----------------------------------------------------------------------*
-		//*	ValidateFile																													*
-		//*-----------------------------------------------------------------------*
-		/// <summary>
-		/// Validate the caller's specified file pattern and return a value
-		/// indicating whether that pattern is valid.
-		/// </summary>
-		/// <param name="filePath">
-		/// The relative or fully-qualified path and filename to validate.
-		/// </param>
-		/// <returns>
-		/// Value indicating whether the file was successfully validated.
-		/// </returns>
-		/// <remarks>
-		/// The file pattern can be valid even if there are no files in the
-		/// specified directory. It will not be valid, however, if a non-existent
-		/// file or directory is specified.
-		/// </remarks>
-		public bool ValidateFile(string filePath)
-		{
-			DirectoryInfo dir = null;
-			FileInfo file = null;
-			string filepattern = "";
-			int lastSlash = 0;
-			string pathpattern = "";
-			bool result = true;
-
-			mFilePattern = filePath;
-			lastSlash = Math.Max(
-				mFilePattern.LastIndexOf('\\'),
-				mFilePattern.LastIndexOf('/'));
-			if(lastSlash > -1 && lastSlash < mFilePattern.Length)
-			{
-				//	A path is specified.
-				if(lastSlash + 1 < mFilePattern.Length)
-				{
-					filepattern = mFilePattern.Substring(lastSlash + 1);
-				}
-				pathpattern = mFilePattern.Substring(0, lastSlash);
-				if(pathpattern.Length == 0)
-				{
-					pathpattern = Directory.GetCurrentDirectory();
-				}
-				if(!pathpattern.EndsWith(@"\") && !pathpattern.EndsWith("/"))
-				{
-					pathpattern += @"\";
-				}
-				if(filepattern.IndexOf('*') < 0 && filepattern.IndexOf('?') < 0)
-				{
-					//	No wildcards specified.
-					file = new FileInfo(pathpattern + filepattern);
-					if(!file.Exists)
-					{
-						//	This might be a directory name with no trailing symbols.
-						dir = new DirectoryInfo(pathpattern + filepattern);
-						if(dir.Exists)
-						{
-							//	This is a directory.
-							filepattern = "*";
-							pathpattern = mFilePattern;
-						}
-					}
-				}
-				if(pathpattern.IndexOf('*') > -1 || pathpattern.IndexOf('?') > -1)
-				{
-					//	Directory can't contain a wildcard.
-					result = false;
-					Console.WriteLine("Directory: " + pathpattern +
-						" can't contain wildcards...");
-				}
-			}
-			else
-			{
-				//	Only the filename is specified.
-				filepattern = mFilePattern;
-			}
-			if(result)
-			{
-				if(pathpattern.Length > 0)
-				{
-					dir = new DirectoryInfo(pathpattern);
-				}
-				else
-				{
-					dir = new DirectoryInfo(Directory.GetCurrentDirectory());
-				}
-				if(dir.Exists)
-				{
-					pathpattern = dir.FullName;
-					if(!pathpattern.EndsWith(@"\") && !pathpattern.EndsWith("/"))
-					{
-						pathpattern += @"\";
-					}
-					if(filepattern.IndexOf('*') > -1 || filepattern.IndexOf('?') > -1 ||
-						(filepattern.Length == 0 && pathpattern.Length > 0))
-					{
-						//	Filename contains wildcards.
-						mFiles = dir.GetFiles(filepattern);
-					}
-					else
-					{
-						//	Specific filename.
-						file = new FileInfo(pathpattern + filepattern);
-						if(file.Exists)
-						{
-							mFiles = new FileInfo[1];
-							mFiles[0] = file;
-						}
-						else
-						{
-							result = false;
-							Console.WriteLine("File not found: " + filepattern);
-						}
-					}
-				}
-				else
-				{
-					result = false;
-					Console.WriteLine("Folder not found: " + pathpattern);
-				}
-			}
-			return result;
 		}
 		//*-----------------------------------------------------------------------*
 

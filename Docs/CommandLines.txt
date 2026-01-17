@@ -2,5 +2,6 @@ findandreplace /wait /files:C:\Temp\*web.config /find:"Composite\.xap\?version=(
 findandreplace /wait /files:C:\Temp\web.config /patternfile:C:\Temp\FindAndReplace.json
 findandreplace /wait /files:C:\Files\Dropbox\Develop\Projects\PowerMakeSystemsWeb25\Articles\KB\Automation\LayersOfIndustrialAutomation.md /patternfile:C:\Files\Dropbox\Develop\Projects\PowerMakeSystemsWeb25\scripts\ReadmePostProcessing.json
 findandreplace /wait /files:C:\Files\Dropbox\Develop\Shared\SvgTools\README.md /patternfile:C:\Files\Dropbox\Develop\Shared\SvgTools\Scripts\ReadmePostProcessing.json
+findandreplace /wait /infile:Docs\NuGetUpdates.md /outfile:Source\NuGet\README.md /patternfile:Scripts\NuGetReadMeProcessing.json /workingpath:C:\Files\Dropbox\Develop\Shared\ActionEngine
 
 findandreplaceinfiles /wait /workingpath:C:/Files/Dropbox/Develop/Shared/SvgTools/Scripts /patternfile:VersionTransfer.json

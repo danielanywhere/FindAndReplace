@@ -2,7 +2,7 @@
   "profiles": {
     "FindAndReplace": {
       "commandName": "Project",
-      "commandLineArgs": "findandreplace /wait /files:C:\\Files\\Dropbox\\Develop\\Shared\\SvgTools\\README.md /patternfile:C:\\Files\\Dropbox\\Develop\\Shared\\SvgTools\\Scripts\\ReadmePostProcessing.json"
+      "commandLineArgs": "findandreplace /wait /infile:Docs\\NuGetUpdates.md /outfile:Source\\NuGet\\README.md /patternfile:Scripts\\NuGetReadMeProcessing.json /workingpath:C:\\Files\\Dropbox\\Develop\\Shared\\ActionEngine"
     }
   }
 }
